@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -31,7 +30,7 @@ func opt(envVar, defaultValue string) string {
 func main() {
 	platform.FixConsoleIfNeeded()
 
-	var addr, db, authfile, certfile, keyfile, basepath, logfile string
+	var addr, db, username, password, certfile, keyfile, basepath, logfile string
 	var ver, open bool
 
 	flag.CommandLine.SetOutput(os.Stdout)
@@ -46,7 +45,8 @@ func main() {
 
 	flag.StringVar(&addr, "addr", opt("YARR_ADDR", "127.0.0.1:7070"), "address to run server on")
 	flag.StringVar(&basepath, "base", opt("YARR_BASE", ""), "base path of the service url")
-	flag.StringVar(&authfile, "auth-file", opt("YARR_AUTHFILE", ""), "`path` to a file containing username:password")
+	flag.StringVar(&username, "username", opt("YARR_USERNAME", ""), "username to use")
+	flag.StringVar(&password, "password", opt("YARR_PASSWORD", ""), "password to use")
 	flag.StringVar(&certfile, "cert-file", opt("YARR_CERTFILE", ""), "`path` to cert file for https")
 	flag.StringVar(&keyfile, "key-file", opt("YARR_KEYFILE", ""), "`path` to key file for https")
 	flag.StringVar(&db, "db", opt("YARR_DB", ""), "storage file `path`")
@@ -86,26 +86,6 @@ func main() {
 	}
 
 	log.Printf("using db file %s", db)
-
-	var username, password string
-	if authfile != "" {
-		f, err := os.Open(authfile)
-		if err != nil {
-			log.Fatal("Failed to open auth file: ", err)
-		}
-		defer f.Close()
-		scanner := bufio.NewScanner(f)
-		for scanner.Scan() {
-			line := scanner.Text()
-			parts := strings.Split(line, ":")
-			if len(parts) != 2 {
-				log.Fatalf("Invalid auth: %v (expected `username:password`)", line)
-			}
-			username = parts[0]
-			password = parts[1]
-			break
-		}
-	}
 
 	if (certfile != "" || keyfile != "") && (certfile == "" || keyfile == "") {
 		log.Fatalf("Both cert & key files are required")
