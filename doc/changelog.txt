@@ -1,9 +1,18 @@
 # upcoming
 
+- (new) ARM build support (thanks to @tillcash & @fenuks)
+- (new) auth configuration via param or env variable (thanks to @pierreprinetti)
+- (fix) concurrency issue crashing the app (thanks to @quoing)
+- (fix) favicon visibility in dark mode (thanks to @caycaycarly for the report)
+- (fix) autoloading more articles not working in certain edge cases (thanks to @fenuks for the report)
+- (fix) handle Google URL redirects in "Read Here" (thanks to @cubbei for discovery)
+
+# v2.3 (2022-05-03)
+
 - (fix) handling encodings (thanks to @f100024 & @fserb)
 - (fix) parsing xml feeds with illegal characters (thanks to @stepelu for the report)
 - (fix) old articles reappearing as unread (thanks to @adaszko for the report)
-- (fix) item list not scrolling on large screens (thanks to @bielej for the report)
+- (fix) item list scrolling issue on large screens (thanks to @bielej for the report)
 - (fix) keyboard shortcuts color in dark mode (thanks to @John09f9 for the report)
 - (etc) autofocus when adding a new feed (thanks to @lakuapik)
 

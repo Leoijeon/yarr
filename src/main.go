@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -27,10 +29,25 @@ func opt(envVar, defaultValue string) string {
 	return defaultValue
 }
 
+func parseAuthfile(authfile io.Reader) (username, password string, err error) {
+	scanner := bufio.NewScanner(authfile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			return "", "", fmt.Errorf("wrong syntax (expected `username:password`)")
+		}
+		username = parts[0]
+		password = parts[1]
+		break
+	}
+	return username, password, nil
+}
+
 func main() {
 	platform.FixConsoleIfNeeded()
 
-	var addr, db, username, password, certfile, keyfile, basepath, logfile string
+	var addr, db, authfile, auth, certfile, keyfile, basepath, logfile string
 	var ver, open bool
 
 	flag.CommandLine.SetOutput(os.Stdout)
@@ -45,8 +62,8 @@ func main() {
 
 	flag.StringVar(&addr, "addr", opt("YARR_ADDR", "127.0.0.1:7070"), "address to run server on")
 	flag.StringVar(&basepath, "base", opt("YARR_BASE", ""), "base path of the service url")
-	flag.StringVar(&username, "username", opt("YARR_USERNAME", ""), "username to use")
-	flag.StringVar(&password, "password", opt("YARR_PASSWORD", ""), "password to use")
+	flag.StringVar(&authfile, "auth-file", opt("YARR_AUTHFILE", ""), "`path` to a file containing username:password. Takes precedence over --auth (or YARR_AUTH)")
+	flag.StringVar(&auth, "auth", opt("YARR_AUTH", ""), "string with username and password in the format `username:password`")
 	flag.StringVar(&certfile, "cert-file", opt("YARR_CERTFILE", ""), "`path` to cert file for https")
 	flag.StringVar(&keyfile, "key-file", opt("YARR_KEYFILE", ""), "`path` to key file for https")
 	flag.StringVar(&db, "db", opt("YARR_DB", ""), "storage file `path`")
@@ -86,6 +103,24 @@ func main() {
 	}
 
 	log.Printf("using db file %s", db)
+
+	var username, password string
+	if authfile != "" {
+		f, err := os.Open(authfile)
+		if err != nil {
+			log.Fatal("Failed to open auth file: ", err)
+		}
+		defer f.Close()
+		username, password, err = parseAuthfile(f)
+		if err != nil {
+			log.Fatal("Failed to parse auth file: ", err)
+		}
+	} else if auth != "" {
+		username, password, err = parseAuthfile(strings.NewReader(auth))
+		if err != nil {
+			log.Fatal("Failed to parse auth literal: ", err)
+		}
+	}
 
 	if (certfile != "" || keyfile != "") && (certfile == "" || keyfile == "") {
 		log.Fatalf("Both cert & key files are required")
